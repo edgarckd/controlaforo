@@ -32,7 +32,7 @@ void setup() {
 }
  
 void loop() {
-  //imprimir_texto("Esperando...");  
+  imprimir_texto("Esperando...");  
   if ( ! rfid.PICC_IsNewCardPresent())
     return;
   if ( ! rfid.PICC_ReadCardSerial())
@@ -59,6 +59,7 @@ void loop() {
     Serial.println(F("Card read previously."));
     String   tarjeta_vieja = "TARJETA YA REGISTRADA";  
     imprimir_texto(tarjeta_vieja);
+    delay(3000);    
     }
   // Halt PICC
   rfid.PICC_HaltA();
@@ -93,7 +94,7 @@ void imprimir_ID(byte nuidPICC[4]){
     oled.print(mensaje);
     oled.display();     
   }
-  
+  delay(3000);
 }
 
 
