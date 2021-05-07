@@ -3,7 +3,7 @@
 #include <Wire.h>			// libreria para bus I2C
 #include <Adafruit_GFX.h>		// libreria para pantallas graficas
 #include <Adafruit_SSD1306.h>		// libreria para controlador SSD1306
-#include <protothreads.h>
+#include <Servo.h>
 
 
 #define ANCHO 128			// reemplaza ocurrencia de ANCHO por 128
@@ -21,17 +21,21 @@ MFRC522::MIFARE_Key key;
 
 // Init array that will store new NUID 
 byte nuidPICC[4];
-byte data_base[4][5] = {{0x83,0x96,0xde,0x18,0x0},{0x19,0x33,0x92,0x98,0x0},{0xca,0x3,0xa4,0x24,0x0},{0xd3,0x24,0x3d,0x16}};
-bool ingreso = false; 
+byte data_base[4][5] = {{0x83,0x96,0xde,0x18,0x0},{0x19,0x33,0x92,0x98,0x0},{0xca,0x3,0xa4,0x24,0x3},{0xd3,0x24,0x3d,0x16,0x0}};
+
+bool ingreso = false;
+Servo puerta; 
+
 void setup(){
-  
+  puerta.attach(13);
 }
 void loop(){
   lectura();
 }
 
 // aquí inician las funciones para el funcionamiento del programa
-void lectura() {     
+void lectura() { 
+// actua como void setup(){}
   if(ingreso == false){
     Serial.begin(115200);
     SPI.begin(); // Init SPI bus
@@ -62,16 +66,15 @@ void lectura() {
       for (byte i = 0; i < 4; i++) {
         nuidPICC[i] = rfid.uid.uidByte[i];
       }
-    
-      printHex(rfid.uid.uidByte, rfid.uid.size);
-      Serial.println();
-      imprimir_ID(nuidPICC);    
+      imprimir_ID(nuidPICC);      
+      ComprobarEstado(nuidPICC);
     }
     else{
-      Serial.println(F("Card read previously."));
       String   tarjeta_vieja = "TARJETA YA REGISTRADA";  
       imprimir_texto(tarjeta_vieja);
-      delay(3000);    
+      delay(1500);    
+      imprimir_texto("ya se ejecuto una accion");
+      delay(1500);
       }
     // Halt PICC
     rfid.PICC_HaltA();
@@ -110,9 +113,66 @@ void imprimir_ID(byte nuidPICC[4]){
   delay(3000);
 }
 
+void Ingresando(int ubi){
+  data_base[ubi][4] == 0x1;
+  imprimir_texto("ingresando...");
+  delay(3000);
+  imprimir_texto("abriendo puerta...");  
+  for(int i = 128; i > 0; i-- ){
+    puerta.write(i);
+    delay(25);
 
+  }
+  imprimir_texto("cerrando, cuidado...");  
+  for(int i = 0; i < 128; i++ ){
+    puerta.write(i);
+    delay(25);
+    
+  }  
+  
+}
 
+void Saliendo(int ubi){
+  data_base[ubi][4] = 0x0;
+  imprimir_texto("saliendo...");
+  delay(3000);  
+  imprimir_texto("abriendo puerta...");     
+  for(int i = 128; i < 255; i++ ){
+    puerta.write(i);
+    delay(25);
+    
+  }
+  imprimir_texto("cerrando, cuidado...");  
+  for(int i = 255; i > 128; i-- ){
+    puerta.write(i);
+    delay(25);
+    
+  }  
+  
+}
 
+void ComprobarEstado(byte ID[]){
+  for(int i = 0; i<=4;i++){
+    //if(i < 4){
+      if (ID[0] == data_base[i][0] && ID[1] == data_base[i][1] && ID[2] == data_base[i][2] && ID[3] == data_base[i][3] ) {
+        if(data_base[i][4] == 0x1){
+          Saliendo(i);
+        }
+        if(data_base[i][4] == 0x0){
+          Ingresando(i);
+        }
+        else{
+          imprimir_texto("no autorizado");
+          delay(3000);                    
+        }  
+      }        
+    //}
+    /*else{
+      imprimir_texto("No registrado");
+    }*/
+  }    
+      
+}
 
 
 
