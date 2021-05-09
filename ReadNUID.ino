@@ -21,7 +21,7 @@ MFRC522::MIFARE_Key key;
 
 // Init array that will store new NUID 
 byte nuidPICC[4];
-byte data_base[4][5] = {{0x83,0x96,0xde,0x18,0x0},{0x19,0x33,0x92,0x98,0x0},{0xca,0x3,0xa4,0x24,0x3},{0xd3,0x24,0x3d,0x16,0x0}};
+byte data_base[4][5] = {{0x83,0x96,0xde,0x18,0x0},{0x19,0x33,0x92,0x98,0x0},{0xca,0x3,0xa4,0x24,0x0},{0xd3,0x24,0x3d,0x16,0x0}};
 
 int aforo = 0;
 int aforo_max = 2;
@@ -54,22 +54,28 @@ void loop(){
   rfid.PICC_HaltA();
   // Stop encryption on PCD
   rfid.PCD_StopCrypto1();
+  
   int ubi=ubicacion(rfid.uid.uidByte, data_base);
+  
   if(data_base[ubi][4] == 0x1){
-    Saliendo(ubi);
-    aforo--;    
+      Saliendo(ubi);
+      aforo--;
   }
-  if(data_base[ubi][4]==0x0){
-    if(aforo<2){
-      Ingresando(ubi);
-      aforo++;            
-    }
-    else{
-      imprimir_texto("Aforo al Maximo");
-      delay(2000);
-    }      
-      
-  } 
+  else{
+    if(data_base[ubi][4]==0x0){
+      if(aforo<2){
+        Ingresando(ubi);
+        aforo++;            
+      }
+      else{
+        imprimir_texto("Aforo al Maximo");
+        delay(2000);
+      }      
+        
+    }    
+  }
+  
+   
 }
 
 
@@ -104,9 +110,9 @@ void imprimir_ID(byte nuidPICC[4]){
 }
 
 void Ingresando(int ubi){
-  data_base[ubi][4] == 0x1;
+  data_base[ubi][4] = 0x1;
   imprimir_texto("ingresando...");
-  delay(3000);
+  delay(1000);
   imprimir_texto("abriendo puerta...");  
   for(int i = 128; i > 0; i-- ){
     puerta.write(i);
@@ -125,7 +131,7 @@ void Ingresando(int ubi){
 void Saliendo(int ubi){
   data_base[ubi][4] = 0x0;
   imprimir_texto("saliendo...");
-  delay(3000);  
+  delay(1000);  
   imprimir_texto("abriendo puerta...");     
   for(int i = 128; i < 255; i++ ){
     puerta.write(i);
