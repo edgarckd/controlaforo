@@ -29,6 +29,7 @@ int aforo_max = 2;
 Servo puerta; 
 
 void setup(){
+
   puerta.attach(13);
   Serial.begin(115200);
   SPI.begin(); // Init SPI bus
@@ -53,9 +54,22 @@ void loop(){
   rfid.PICC_HaltA();
   // Stop encryption on PCD
   rfid.PCD_StopCrypto1();
-
-  
-
+  int ubi=ubicacion(rfid.uid.uidByte, data_base);
+  if(data_base[ubi][4] == 0x1){
+    Saliendo(ubi);
+    aforo--;    
+  }
+  if(data_base[ubi][4]==0x0){
+    if(aforo<2){
+      Ingresando(ubi);
+      aforo++;            
+    }
+    else{
+      imprimir_texto("Aforo al Maximo");
+      delay(2000);
+    }      
+      
+  } 
 }
 
 
@@ -127,7 +141,15 @@ void Saliendo(int ubi){
   
 }
 
-
+int ubicacion(byte ID[4], byte data_base[4][5]){
+  int ubi;
+  for(int i = 0; i<=3; i++){
+    if(ID[0] == data_base[i][0] && ID[1] == data_base[i][1] && ID[2] == data_base[i][2] && ID[3] == data_base[i][3]){    
+      ubi = i;              
+    }       
+  }
+  return ubi;  
+}
 
 
 
